@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { COGNATE_SETS, LANGUAGE_FAMILIES, buildGraph } from '../mock/data'
+import { TRAVEL_TERMS } from '../mock/travel'
 export { LANGUAGE_FAMILIES, COGNATE_SETS }
 
 export const useEtymologyStore = defineStore('etymology', () => {
@@ -18,5 +19,22 @@ export const useEtymologyStore = defineStore('etymology', () => {
     })
   )
 
-  return { graph, selectedNode, searchQuery, selectedFamily, filteredCognates }
+  // —— 旅行用语专题 ——
+  const activeScene = ref<string>('all')
+  const travelQuery = ref('')
+
+  const filteredTravelTerms = computed(() =>
+    TRAVEL_TERMS.filter(t => {
+      const matchScene = activeScene.value === 'all' || t.scene === activeScene.value
+      const q = travelQuery.value.trim().toLowerCase()
+      if (!q) return matchScene
+      const haystack = [t.concept, t.root, t.rootMeaning, t.shiftLabel, ...Object.values(t.forms).map(f => f?.word ?? ''), ...Object.values(t.forms).map(f => f?.note ?? '')]
+      return matchScene && haystack.some(s => s.toLowerCase().includes(q))
+    })
+  )
+
+  return {
+    graph, selectedNode, searchQuery, selectedFamily, filteredCognates,
+    activeScene, travelQuery, filteredTravelTerms,
+  }
 })
